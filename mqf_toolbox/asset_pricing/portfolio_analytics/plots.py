@@ -66,7 +66,7 @@ def plot_eff(apf: APFrame, sqrt=False, mode='ef',
     plt.plot(variance_values_pos, return_values_lower, '--', color=color, label='Inefficient Frontier')
     plt.axhline(mv_y, ls=':', color=color, label='Minimum ' + var_str + ' Returns')
     plt.title('Efficient Frontier')
-    plt.ylabel(ret_str + ' (%)')
+    plt.ylabel(ret_str)
     plt.xlabel('Portfolio ' + var_str)
 
     yticks = np.arange(lower, np.round(upper, 1) + y_increment, y_increment)

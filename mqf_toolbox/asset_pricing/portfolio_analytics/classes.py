@@ -423,7 +423,7 @@ class APFrame:
         for risk_name, risk in self.risk_factor_df.iteritems():
             corr = np.corrcoef(self.benchmark_series.values, risk.values)[0, 1]
             if corr > 0.7:
-                warn(str(risk_name) + ' is highly correlated with benchmark ' + self.benchmark_series.name,
+                warn(str(risk_name) + ' is highly correlated with benchmark ' + str(self.benchmark_series.name),
                      stacklevel=3)
 
     # rf
@@ -483,18 +483,50 @@ class APFrame:
 
     @property
     def expected_returns(self):
+        """
+        Property for easy access to self.portfolio_df.mean()
+
+        Returns
+        -------
+        expected_returns: pd.Series
+            A series of average returns of the portfolio_df
+
+        """
         ret_series = self.portfolio_df.mean()
         ret_series.name = 'Expected Returns'
         return ret_series
 
     @property
     def expected_deviations(self):
+        """
+        Property for easy access to expected deviation from benchmark
+
+        Returns
+        -------
+        expected_deviations: pd.Series
+            A series of average difference of the portfolio_df - self.benchmark_series
+
+        """
         deviations = self.portfolio_df - self.benchmark_series.values.reshape(-1, 1)
         expected_deviations = deviations.mean()
         expected_deviations.name = 'Expected Deviations'
         return expected_deviations
 
     def calculate_sortino(self, target=None):
+        """
+        sortino
+
+        Parameters
+        ----------
+        target: float
+            Target return for calculating shortfall
+
+        Returns
+        -------
+        sortino_ratio: pd.Series
+            A series of return above target divided by downside semi deviation
+
+        """
         target = target if target is not None else self.risk_free_rate
         target = np.array(target).reshape(-1, 1)
         if target.shape == (1, 1):
@@ -508,14 +540,72 @@ class APFrame:
 
     # use rf
 
-    def cal_function_from_std(self, vol):
-        return self.risk_free_rate.mean() + self.rf_tangency_sharpe * vol
+    def cal_function_from_std(self, std):
+        """
+        cal = capital asset line
+
+        this function is like the result of calling ef.get_orthogonal_portfolio_function
+        with a constant risk-free-rate as the target returns.
+
+        Handy for plotting
+
+        Parameters
+        ----------
+        std: float
+            input values of vol
+
+        Returns
+        -------
+        returns: float
+            output values of returns that is on the cal line given vol
+
+        """
+        return self.risk_free_rate.mean() + self.rf_tangency_sharpe * std
 
     def cal_function_from_return(self, returns):
+        """
+        cal = capital asset line
+        inverse of cal_function_from_std
+
+        Handy for plotting
+
+        Parameters
+        ----------
+        returns: float
+            input values of returns
+
+        Returns
+        -------
+        std: float
+            output values of std that is on the cal line given returns
+
+        """
+
         var = ((returns - self.risk_free_rate.mean()) ** 2) / (self.rf_tangency_sharpe ** 2)
         return var ** 0.5
 
     def calculate_weights_rf(self, returns):
+        """
+        Calculate portfolio weights required to achieve target returns.
+        Total weights below/above 1 implies investing in risk-free/debt leveraging.
+
+        Sanity Check:
+            ef.calculate_portfolio_weights(self.rf_tangency_returns)
+            and
+            calculate_weights_rf(self.rf_tangency_returns)
+            should give identical results.
+
+        Parameters
+        ----------
+        returns:
+            target returns
+
+        Returns
+        -------
+        portfolio_weights: np.ndarray
+            Arrays of portfolio weights
+
+        """
         r_f = self.risk_free_rate.mean()
         lagrange_n = (returns - r_f)
         # there's a sharpe squared here?
@@ -524,6 +614,20 @@ class APFrame:
         return (lagrange * self.ef.cov_inv @ self.rf_expected_risk_premiums.values).A.reshape(-1)
 
     def calculate_sharpe(self, risk_free_rate=None):
+        """
+        good ol sharpe ratio
+
+        Parameters
+        ----------
+        risk_free_rate: float, pd.Series, np.ndarray
+            risk-free rate for sharpe calculation
+
+        Returns
+        -------
+        sharpe_ratio: pd.Series:
+            a series of sharpe ratio for each instrument
+
+        """
         rf = risk_free_rate if risk_free_rate is not None else self.risk_free_rate
         if type(rf) not in [float, int]:
             rf = rf.values.reshape(-1, 1)
