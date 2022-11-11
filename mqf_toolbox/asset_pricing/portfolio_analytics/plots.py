@@ -62,10 +62,11 @@ def plot_eff(apf: APFrame, sqrt=False, mode='ef',
     return_values_lower = np.linspace(mv_y, lower, linspace_count)
 
     variance_values_pos = eff(return_values_upper)
+    variance_values_neg = eff(return_values_lower)
 
     # Plotting
     plt.plot(variance_values_pos, return_values_upper, color=color, label='Efficient Frontier')
-    plt.plot(variance_values_pos, return_values_lower, '--', color=color, label='Inefficient Frontier')
+    plt.plot(variance_values_neg, return_values_lower, '--', color=color, label='Inefficient Frontier')
     # plt.axhline(mv_y, ls=':', color=color, label='Minimum ' + var_str + ' Returns')
     plt.axhline(mv_y, ls=':', color=color)
     plt.annotate((round(min_x, 3), round(mv_y, 3)), xy=(min_x, mv_y), size=12)
@@ -74,7 +75,7 @@ def plot_eff(apf: APFrame, sqrt=False, mode='ef',
     plt.ylabel(ret_str)
     plt.xlabel('Portfolio ' + var_str)
 
-    yticks = np.arange(lower, np.round(upper, 1) + y_increment, y_increment)
+    yticks = np.arange(lower, np.round(upper, 2) + y_increment, y_increment)
 
     plt.yticks(yticks)
     plt.legend()
