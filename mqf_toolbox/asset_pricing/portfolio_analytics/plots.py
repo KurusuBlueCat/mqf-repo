@@ -171,6 +171,7 @@ def plot_sml(apf: APFrame,
              security_name='default',
              annotate=False):
     sml_df = calculate_alpha_beta(apf, include_bm=True)
+    instrument_count = sml_df.shape[0] - 1
     sml_func = get_sml_function(apf, include_bm=True)
     expected_ret = apf.portfolio_df.mean()
     expected_ret[apf.benchmark_series.name] = apf.benchmark_series.mean()
@@ -206,9 +207,8 @@ def plot_sml(apf: APFrame,
     plt.plot(sml_x, sml_y)
     plt.axhline(0, color='black')
     plt.axvline(0, color='black')
-    plt.ylabel('Expected Return')
+    plt.ylabel('Expected Return(%)')
     plt.xlabel('Beta')
-    plt.xticks([i * 0.1 for i in range(21)])
 
     plt.grid()
 
@@ -216,7 +216,9 @@ def plot_sml(apf: APFrame,
         for industry, (a, b, r) in sml_df.iterrows():
             plt.annotate(industry, (b + 0.01, r + 0.01))
 
-    plt.title('Security Market Line from 10 industry + market returns')
+    plt.title('Security Market Line from '
+              + str(instrument_count)
+              + ' instrument(s) + market returns')
 
 
 def plots_metrics(metrics_df, figsize=(10, 16)):
