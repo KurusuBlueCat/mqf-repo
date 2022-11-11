@@ -47,6 +47,8 @@ def plot_eff(apf: APFrame, sqrt=False, mode='ef',
 
     # Calculation
     mv, mv_y = efc.mv, efc.mv_y
+    min_x = mv ** 0.5 if sqrt else mv
+
     eff = efc.get_ef_function(sqrt)
 
     if ylim is None:
@@ -64,7 +66,10 @@ def plot_eff(apf: APFrame, sqrt=False, mode='ef',
     # Plotting
     plt.plot(variance_values_pos, return_values_upper, color=color, label='Efficient Frontier')
     plt.plot(variance_values_pos, return_values_lower, '--', color=color, label='Inefficient Frontier')
-    plt.axhline(mv_y, ls=':', color=color, label='Minimum ' + var_str + ' Returns')
+    # plt.axhline(mv_y, ls=':', color=color, label='Minimum ' + var_str + ' Returns')
+    plt.axhline(mv_y, ls=':', color=color)
+    plt.annotate((round(min_x, 3), round(mv_y, 3)), xy=(min_x, mv_y), size=12)
+    plt.plot(min_x, mv_y, 'o', label='Global Minimum ' + var_str + ' Portfolio')
     plt.title('Efficient Frontier')
     plt.ylabel(ret_str)
     plt.xlabel('Portfolio ' + var_str)
@@ -113,29 +118,49 @@ def plot_tangent(apf, tangency_returns, tangency=True, orthogonal=False,
         tangent_1_f = efc.get_tangency_portfolio_function(tangency_returns)
 
         tangent_1 = tangent_1_f(std_space)
-        label = 'Tangent at Rp={0:.2f}, Std.={1:.2f}'.format(tangency_returns,
-                                                             get_sigma(tangency_returns))
+        label = 'Tangent line'
+
+        x_plot, y_plot = get_sigma(tangency_returns), tangency_returns
 
         plt.plot(std_space, tangent_1, label=label, color=tangency_color)
-        plt.hlines(tangency_returns,
-                   0, get_sigma(tangency_returns),
-                   color=tangency_color,
-                   ls='--',
-                   label='Return={0:.2f}%'.format(tangency_returns))
+        plt.annotate((round(x_plot, 3), round(y_plot, 3)), xy=(x_plot, y_plot), size=12)
+        plt.plot(x_plot, y_plot, 'o', color=tangency_color, label='Tangency Portfolio')
+
+        if orthogonal:
+            plt.hlines(tangency_returns,
+                       0, get_sigma(tangency_returns),
+                       color=tangency_color,
+                       ls='--')
+        else:
+            ort_y = efc.calculate_ort_portfolio_returns(tangency_returns)
+            plt.annotate((0, round(ort_y, 3)), xy=(0, ort_y), size=12)
+            plt.plot(0, ort_y, 'o', color=orthogonal_color, label='Orthogonal Returns')
 
     if orthogonal:
         tangent_2_f = efc.get_orthogonal_portfolio_function(tangency_returns)
         tangent_2 = tangent_2_f(std_space)
         orthogonal_returns = efc.calculate_ort_portfolio_returns(tangency_returns)
 
-        label_2 = 'Tangent at Rp={0:.2f}, Std.={1:.2f}'.format(orthogonal_returns,
-                                                               get_sigma(orthogonal_returns))
+        x_plot, y_plot = get_sigma(orthogonal_returns), orthogonal_returns
+
+        label_2 = 'Orthogonal Tangent Line'
+
         plt.plot(std_space, tangent_2, label=label_2, color=orthogonal_color)
-        plt.hlines(orthogonal_returns,
-                   0, get_sigma(orthogonal_returns),
-                   color=orthogonal_color,
-                   ls='-.',
-                   label='Orthogonal Portfolio Return={0:.2f}'.format(orthogonal_returns))
+        plt.annotate((round(x_plot, 3), round(y_plot, 3)), xy=(x_plot, y_plot), size=12)
+        plt.plot(x_plot, y_plot, 'o', color=orthogonal_color, label='Orthogonal Portfolio')
+
+        if tangency:
+            plt.hlines(orthogonal_returns,
+                       0, get_sigma(orthogonal_returns),
+                       color=orthogonal_color,
+                       ls='-.')
+        else:
+            tan_y = tangency_returns
+            plt.annotate((0, round(tan_y, 3)), xy=(0, tan_y), size=12)
+            plt.plot(0, tan_y, 'o', color=tangency_color, label='Tangency Returns')
+
+
+
 
     plt.legend()
 

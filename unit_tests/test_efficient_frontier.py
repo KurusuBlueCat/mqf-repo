@@ -13,13 +13,15 @@ risk_data = pd.read_csv('Risk_Factors.csv')
 risk_data['Date'] = pd.to_datetime(risk_data['Date'], format='%d/%m/%Y')
 risk_data = risk_data.set_index('Date')
 
-# ap_frame = APFrame(data, benchmark_series=market_data, risk_free_rate=0.13)
-# plot_eff(ap_frame, sqrt=True, mode='te')
-# plot_tangent(ap_frame, ap_frame.bm_tangency_returns, mode='te', orthogonal=True)
-
-# ap_frame.calculate_portfolio_weights(ap_frame.min_variance_returns)
+ap_frame = APFrame(data, benchmark_series=market_data, risk_free_rate=0.13)
+plot_eff(ap_frame, sqrt=True, mode='ef')
+plot_tangent(ap_frame, ap_frame.rf_tangency_returns,
+             mode='ef',
+             tangency=False,
+             orthogonal=False)
+#
 # ap_frame = APFrame(data, benchmark_series=market_data, risk_free_rate=risk_data['Rf'].to_frame())
-# plot_montecarlo_portfolio_apf(ap_frame, mode='te', inverse=True)
+# plot_montecarlo_portfolio_apf(ap_frame, mode='ef', inverse=True)
 # plot_eff(ap_frame, sqrt=True, mode='te', ylim=(-1, 1))
 
 
