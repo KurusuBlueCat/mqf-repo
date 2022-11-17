@@ -3,33 +3,16 @@ import numpy as np
 
 
 class StatePricing:
-    _rf_str = 'rf'
 
-    def __init__(self, init_price_series, state_payoff_df, risk_free_rate=10, physical_prob_series=None):
-        self.risk_free_rate = risk_free_rate
-
+    def __init__(self, init_price_series: pd.Series, state_payoff_df: pd.DataFrame, physical_prob_series=None):
         price_s = init_price_series.copy()
-        price_s = pd.concat([pd.Series(1 / self._rf_factor, index=[self._rf_str]), price_s])
-
         self.init_price_series = price_s
 
         payoff_df = state_payoff_df.copy()
-        payoff_df = pd.concat(
-            [pd.DataFrame([[1] * payoff_df.shape[1]], index=[self._rf_str], columns=payoff_df.columns),
-             payoff_df])
 
         self.state_payoff_df = payoff_df
 
         self.physical_prob_series = physical_prob_series
-
-    @property
-    def risk_free_rate(self):
-        return self._rf_percent
-
-    @risk_free_rate.setter
-    def risk_free_rate(self, value):
-        self._rf_percent = value
-        self._rf_factor = 1 + value / 100
 
     @property
     def physical_prob_series(self):
@@ -38,9 +21,9 @@ class StatePricing:
         return self._prob_s
 
     @physical_prob_series.setter
-    def physical_prob_series(self, value):
+    def physical_prob_series(self, value: pd.Series):
         if value is not None:
-            assert all(value.index == self.state_payoff_df.columns)
+            assert (self.state_payoff_df.columns == value.index).all()
 
         self._prob_s = value
 
@@ -50,10 +33,9 @@ class StatePricing:
         state_price = pd.Series(state_price, index=self.state_payoff_df.columns, name='state price')
         return state_price
 
-    @property
-    def risk_neutral_vector(self):
+    def risk_neutral_vector(self, risk_free_factor):
         state_price = self.state_price
-        risk_neutral = state_price * self._rf_factor
+        risk_neutral = state_price * risk_free_factor
         risk_neutral = pd.Series(risk_neutral, index=state_price.index, name='risk neutral vector')
         return risk_neutral
 
@@ -63,15 +45,13 @@ class StatePricing:
         pricing_kernel.name = 'pricing kernel'
         return pricing_kernel
 
-    @property
-    def radon_nikodym_d(self):
-        rn = self._rf_factor * self.pricing_kernel
+    def radon_nikodym_d(self, risk_free_factor):
+        rn = risk_free_factor * self.pricing_kernel
         rn.name = 'radon nikodym derivative'
         return rn
 
     def _get_underlying(self):
         underlying_list = self.state_payoff_df.index.to_list()
-        underlying_list = [i for i in underlying_list if i != self._rf_str]
         return underlying_list
 
     def calculate_call_payoff(self, strike, underlying_list=None):
@@ -90,8 +70,8 @@ class StatePricing:
         payoff = payoff.clip(lower=0)
         return payoff
 
-    def payoff_valuation(self, payoff, risk_neutral=True):
+    def payoff_valuation(self, payoff, risk_free_factor=1.0, risk_neutral=True):
         if risk_neutral:
             return (payoff * self.state_price).sum()
         else:
-            return (payoff * self.physical_prob_series / self._rf_factor).sum()
+            return (payoff * self.physical_prob_series / risk_free_factor).sum()
