@@ -26,10 +26,7 @@ prices_s = pd.Series(prices, name='initial price')
 
 phys_s = pd.Series(state_phys_prob, name='physical probability')
 
-StatePricing(prices_s, state_df, physical_prob_series=phys_s).state_price
 
-
-# s_pricing = StatePricing(prices_s, state_df, risk_free_rate=10, physical_prob_series=phys_s)
 def test_state_price():
     s_pricing = StatePricing(prices_s, state_df, physical_prob_series=phys_s)
     assert np.isclose(s_pricing.state_price.values, np.array([0.22727273, 0.40909091, 0.27272727])).all()
